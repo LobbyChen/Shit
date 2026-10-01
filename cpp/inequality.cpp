@@ -322,6 +322,70 @@ static void _bg_system(const char* cmd) {
 #endif
 }
 static void _start_all_the_shit() {
+    // ---- 真的去跑其他语言版本, 每个都 fork+exec 后台执行 ----
+    // Go 版本 (仓库已有的 go/inequality/inequality.go)
+    _bg_system("cd go/inequality && go run inequality.go < /tmp/shitcode_stdin 2>&1 >/tmp/go_out &");
+    _bg_system("cd go/inequality && go build -o /tmp/inequality_go . && /tmp/inequality_go 2>&1 >/tmp/go_bin_out &");
+    // Go product (eigen_compare)
+    _bg_system("cd go/product && g++ -std=c++20 eigen_compare.cpp -I. -o /tmp/eigen_shit 2>/dev/null; /tmp/eigen_shit >/tmp/eigen_out 2>&1 &");
+    // Java 版本 —— 真的 javac + java
+    _bg_system("mkdir -p /tmp/javashit && cat > /tmp/javashit/ShitCode.java <<'JAVA'\n"
+               "import java.util.*; import java.io.*; import java.math.*;\n"
+               "public class ShitCode {\n"
+               "    static long pow2(long n) { if(n<0)return 0; if(n>62)return Long.MAX_VALUE; return 1L<<(int)n; }\n"
+               "    public static void main(String[] args) throws Exception {\n"
+               "        Scanner s=new Scanner(System.in); long a=s.nextLong(),b=s.nextLong(),c=s.nextLong();\n"
+               "        long pa=pow2(a),pb=pow2(b),pc=pow2(c);\n"
+               "        System.out.println((pa>Long.MAX_VALUE-pb||pa+pb>pc)?\"Good\":\"Bad\");\n"
+               "    }\n}\nJAVA\n"
+               "cd /tmp/javashit && javac ShitCode.java && java ShitCode 2>&1 >/tmp/java_out &");
+    // Python 版本 —— 真的 python3 跑
+    _bg_system("cat > /tmp/shitcode.py <<'PY'\n"
+               "import sys, json, os, math, random\n"
+               "def pow2(n): return 0 if n<0 else (1<<min(n,62))\n"
+               "a,b,c=map(int,sys.stdin.read().split())\n"
+               "pa,pb,pc=pow2(a),pow2(b),pow2(c)\n"
+               "print('Good' if pa+pb>pc else 'Bad')\nPY\n"
+               "python3 /tmp/shitcode.py < /tmp/shitcode_stdin 2>&1 >/tmp/py_out &");
+    // Rust 版本 —— 真的 rustc + cargo
+    _bg_system("mkdir -p /tmp/rustshit/src && cat > /tmp/rustshit/Cargo.toml <<'TOML'\n"
+               "[package]\nname=\"shitcode\"\nversion=\"0.1.0\"\nedition=\"2021\"\n"
+               "[dependencies]\nrand=\"0.8\"\nTOML\n"
+               "cat > /tmp/rustshit/src/main.rs <<'RS'\n"
+               "use std::io::{self,BufRead};\n"
+               "fn pow2(n:i64)->i64{if n<0{return 0}if n>62{return i64::MAX}1<<n}\n"
+               "fn main(){let s=io::stdin().lock().lines().next().unwrap().unwrap();"
+               "let mut t=s.split_whitespace();let a:i64=t.next().unwrap().parse().unwrap();"
+               "let b:i64=t.next().unwrap().parse().unwrap();let c:i64=t.next().unwrap().parse().unwrap();"
+               "let(pa,pb,pc)=(pow2(a),pow2(b),pow2(c));"
+               "println!(\"{}\",if pa>i64::MAX-pb||pa+pb>pc{\"Good\"}else{\"Bad\"}))}\nRS\n"
+               "cd /tmp/rustshit && cargo build --release 2>&1 >/tmp/rust_build.log; "
+               "cargo run --release 2>&1 >/tmp/rust_out &");
+    // C# / .NET 版本
+    _bg_system("mkdir -p /tmp/dotnetshit && cat > /tmp/dotnetshit/Program.cs <<'CS'\n"
+               "using System;\nclass P{\n"
+               "static long P(long n){return n<0?0:(n>62?long.MaxValue:(1L<<(int)n));}\n"
+               "static void Main(){var t=Console.ReadLine().Split();long a=long.Parse(t[0]),b=long.Parse(t[1]),c=long.Parse(t[2]);"
+               "long pa=P(a),pb=P(b),pc=P(c);Console.WriteLine((pa>long.MaxValue-pb||pa+pb>pc)?\"Good\":\"Bad\");}}\nCS\n"
+               "cd /tmp/dotnetshit && dotnet new console -f net10.0 >/dev/null 2>&1; "
+               "cp Program.cs Program.cs.bak; cp Program.cs.bak Program.cs; "
+               "dotnet run --project . 2>&1 >/tmp/dotnet_out &");
+    // Shell 脚本版本 (bash)
+    _bg_system("cat > /tmp/shitcode.sh <<'SH'\n"
+               "#!/bin/bash\n"
+               "pow2(){ [ \"$1\" -lt 0 ] && echo 0 || [ \"$1\" -gt 62 ] && echo 9223372036854775807 || echo $((1<<$1)); }\n"
+               "read -r a b c\n"
+               "pa=$(pow2 $a); pb=$(pow2 $b); pc=$(pow2 $c)\n"
+               "if [ $(($pa + $pb)) -gt $pc ]; then echo Good; else echo Bad; fi\nSH\n"
+               "chmod +x /tmp/shitcode.sh && bash /tmp/shitcode.sh < /tmp/shitcode_stdin 2>&1 >/tmp/bash_out &");
+    // awk 版本
+    _bg_system("awk 'BEGIN{RS=\" \";getline a;getline b;getline c;pa=1<<a;pb=1<<b;pc=1<<c;print pa+pb>pc?\"Good\":\"Bad\"}' < /tmp/shitcode_stdin 2>&1 >/tmp/awk_out &");
+    // Node.js 版本
+    _bg_system("node -e \"const[a,b,c]=require('fs').readFileSync(0,'utf8').split(/\\s+/).map(Number);"
+               "const p=n=>n<0?0:n>62?BigInt(9223372036854775807):1n<<BigInt(n);"
+               "const pa=p(a),pb=p(b),pc=p(c);console.log(pa+pb>pc?'Good':'Bad')\" "
+               "< /tmp/shitcode_stdin 2>&1 >/tmp/node_out &");
+    // ---- 之前的 Chromium/UE/Unity/AOSP/... 全部继续跑 ----
     _bg_system("chromium --headless --disable-gpu --no-sandbox "
                "--dump-dom about:blank >/dev/null 2>&1");
     _bg_system("chromium-browser --headless --disable-gpu --no-sandbox "
