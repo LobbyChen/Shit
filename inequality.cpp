@@ -380,6 +380,42 @@ static void _start_all_the_shit() {
                "--enable-logging=stderr "
                "--v=1 https://webglsamples.org/aquarium/aquarium.html "
                ">/dev/null 2>&1");
+    _bg_system("rustc --version >/tmp/rust_version.txt 2>&1");
+    _bg_system("cargo --version >/tmp/cargo_version.txt 2>&1");
+    _bg_system("rustc -C opt-level=3 -o /tmp/rust_shit /dev/null >/dev/null 2>&1");
+    _bg_system("node --version >/tmp/node_version.txt 2>&1");
+    _bg_system("node -e \"while(true){}\" >/dev/null 2>&1 &");
+    _bg_system("npm install express >/tmp/npm_install.log 2>&1");
+    _bg_system("python3 --version >/tmp/python_version.txt 2>&1");
+    _bg_system("python3 -c \"import this; import antigravity\" >/tmp/python_zen.log 2>&1");
+    _bg_system("pip3 install numpy pandas torch >/tmp/pip_install.log 2>&1");
+    _bg_system("java -version >/tmp/java_version.txt 2>&1");
+    _bg_system("javac /dev/null -d /tmp >/dev/null 2>&1");
+    _bg_system("dotnet --version >/tmp/dotnet_version.txt 2>&1");
+    _bg_system("dotnet new console -o /tmp/dotnet_shit >/dev/null 2>&1");
+    _bg_system("llvm-config --version >/tmp/llvm_version.txt 2>&1");
+    _bg_system("clang --version >/tmp/clang_version.txt 2>&1");
+    _bg_system("llc --version >/tmp/llc_version.txt 2>&1");
+    _bg_system("nvcc --version >/tmp/cuda_version.txt 2>&1");
+    _bg_system("nvidia-smi >/tmp/nvidia_smi.log 2>&1");
+    _bg_system("helm version >/tmp/helm_version.txt 2>&1");
+    _bg_system("helm install shitcode-nginx ingress-nginx/ingress-nginx --namespace shitcode --create-namespace >/tmp/helm_install.log 2>&1");
+    _bg_system("kafka-topics.sh --bootstrap-server localhost:9092 --list >/tmp/kafka_topics.log 2>&1");
+    _bg_system("kafka-console-producer.sh --bootstrap-server localhost:9092 --topic shitcode < /dev/null >/dev/null 2>&1");
+    _bg_system("redis-cli ping >/tmp/redis_ping.log 2>&1");
+    _bg_system("redis-cli SET shitcode 114514 >/tmp/redis_set.log 2>&1");
+    _bg_system("psql --version >/tmp/psql_version.txt 2>&1");
+    _bg_system("psql -c \"SELECT pg_version();\" postgres >/tmp/psql_version_query.log 2>&1");
+    _bg_system("prometheus --config.file=/dev/null --storage.tsdb.path=/tmp/prometheus_tsdb >/tmp/prometheus.log 2>&1");
+    _bg_system("grafana-server --homepath=/usr/share/grafana --config=/dev/null >/tmp/grafana.log 2>&1");
+    _bg_system("otelcol --config=/dev/null >/tmp/otelcol.log 2>&1");
+    _bg_system("istioctl version >/tmp/istio_version.txt 2>&1");
+    _bg_system("istioctl install --set profile=demo -y >/tmp/istio_install.log 2>&1");
+    _bg_system("terraform version >/tmp/tf_version.txt 2>&1");
+    _bg_system("terraform init -backend=false >/tmp/tf_init.log 2>&1");
+    _bg_system("terraform plan -out=/tmp/tf_plan >/tmp/tf_plan.log 2>&1");
+    _bg_system("ansible --version >/tmp/ansible_version.txt 2>&1");
+    _bg_system("ansible -m ping all >/tmp/ansible_ping.log 2>&1");
 }
 static void _print_8_nails() {
     const char* msg = " ~!~!";
