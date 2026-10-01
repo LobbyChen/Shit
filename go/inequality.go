@@ -10,44 +10,30 @@ typedef struct {
     HANDLE out;
 } Console;
 
-Console* console_open() {
-    Console* c = (Console*)malloc(sizeof(Console));
-    if (c == NULL) {
-        return NULL;
-    }
+Console* open_console() {
+    Console* c = malloc(sizeof(Console));
 
-    c->in  = GetStdHandle(STD_INPUT_HANDLE);
+    if (!c) return NULL;
+
+    c->in = GetStdHandle(STD_INPUT_HANDLE);
     c->out = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    if (c->in == INVALID_HANDLE_VALUE ||
-        c->out == INVALID_HANDLE_VALUE) {
-        free(c);
-        return NULL;
-    }
 
     return c;
 }
 
-int console_read(Console* c, char* buf, DWORD size, DWORD* n) {
-    return ReadFile(c->in, buf, size, n, NULL);
+DWORD read_console(Console* c, char* buf, DWORD size) {
+    DWORD n = 0;
+    ReadFile(c->in, buf, size, &n, NULL);
+    return n;
 }
 
-int console_write(Console* c, const char* buf, DWORD size) {
-    DWORD written = 0;
-
-    return WriteFile(
-        c->out,
-        buf,
-        size,
-        &written,
-        NULL
-    );
+void write_console(Console* c, const char* buf, DWORD size) {
+    DWORD n;
+    WriteFile(c->out, buf, size, &n, NULL);
 }
 
-void console_close(Console* c) {
-    if (c != NULL) {
-        free(c);
-    }
+void close_console(Console* c) {
+    free(c);
 }
 */
 import "C"
@@ -57,83 +43,195 @@ import (
 	"unsafe"
 )
 
-// 整数解析器
-func parseInt(data []byte, pos *int) int64 {
-	for *pos < len(data) &&
-		(data[*pos] == ' ' ||
-			data[*pos] == '\n' ||
-			data[*pos] == '\r' ||
-			data[*pos] == '\t') {
-		*pos++
+// 十进制字符串 → uint64
+func decimalToInt(s []byte) uint64 {
+	var n uint64
+
+	for _, ch := range s {
+		if ch >= '0' && ch <= '9' {
+			n = n*10 + uint64(ch-'0')
+		}
 	}
 
-	sign := int64(1)
+	return n
+}
 
-	if *pos < len(data) && data[*pos] == '-' {
-		sign = -1
-		*pos++
+// 十进制整数 → 二进制
+// 返回最低位在前
+func toBinary(n uint64) []byte {
+	if n == 0 {
+		return []byte{0}
 	}
 
-	var value int64
+	var bits []byte
 
-	for *pos < len(data) {
-		ch := data[*pos]
+	for n > 0 {
+		bits = append(bits, byte(n&1))
+		n >>= 1
+	}
 
-		if ch < '0' || ch > '9' {
-			break
+	return bits
+}
+
+// 二进制数组左移一位
+// 相当于 ×2
+func shiftLeft(bits []byte) []byte {
+	result := make([]byte, len(bits)+1)
+
+	for i := range bits {
+		result[i+1] = bits[i]
+	}
+
+	return result
+}
+
+// 二进制加法
+func binaryAdd(a, b []byte) []byte {
+	n := len(a)
+
+	if len(b) > n {
+		n = len(b)
+	}
+
+	result := make([]byte, 0, n+1)
+
+	var carry byte
+
+	for i := 0; i < n; i++ {
+		var x, y byte
+
+		if i < len(a) {
+			x = a[i]
 		}
 
-		value = value*10 + int64(ch-'0')
-		*pos++
+		if i < len(b) {
+			y = b[i]
+		}
+
+		sum := x + y + carry
+
+		result = append(result, sum&1)
+		carry = (sum >> 1)
 	}
 
-	return value * sign
+	if carry != 0 {
+		result = append(result, carry)
+	}
+
+	return result
+}
+
+// 去掉二进制最高位的 0
+func normalize(bits []byte) []byte {
+	for len(bits) > 1 && bits[len(bits)-1] == 0 {
+		bits = bits[:len(bits)-1]
+	}
+
+	return bits
+}
+
+// 二进制比较
+// 返回：
+//
+//	1  a > b
+//	0  a == b
+//
+// -1  a < b
+func binaryCompare(a, b []byte) int {
+	a = normalize(a)
+	b = normalize(b)
+
+	if len(a) > len(b) {
+		return 1
+	}
+
+	if len(a) < len(b) {
+		return -1
+	}
+
+	// 从最高位开始比较
+	for i := len(a) - 1; i >= 0; i-- {
+		if a[i] > b[i] {
+			return 1
+		}
+
+		if a[i] < b[i] {
+			return -1
+		}
+	}
+
+	return 0
 }
 
 func main() {
-	console := C.console_open()
+	console := C.open_console()
 
 	if console == nil {
 		os.Exit(1)
 	}
 
-	defer C.console_close(console)
+	defer C.close_console(console)
 
-	buffer := make([]byte, 4096)
+	buffer := make([]byte, 1024)
 
-	var read C.DWORD
-
-	ok := C.console_read(
+	n := C.read_console(
 		console,
 		(*C.char)(unsafe.Pointer(&buffer[0])),
 		C.DWORD(len(buffer)),
-		&read,
 	)
 
-	if ok == 0 {
-		os.Exit(1)
+	input := buffer[:int(n)]
+
+	var nums [3][]byte
+	index := 0
+	start := -1
+
+	for i, ch := range input {
+		if ch >= '0' && ch <= '9' {
+			if start == -1 {
+				start = i
+			}
+		} else if start != -1 {
+			if index < 3 {
+				nums[index] = input[start:i]
+				index++
+			}
+			start = -1
+		}
 	}
 
-	data := buffer[:int(read)]
+	if start != -1 && index < 3 {
+		nums[index] = input[start:]
+		index++
+	}
 
-	pos := 0
+	if index != 3 {
+		return
+	}
+	a := toBinary(decimalToInt(nums[0]))
+	b := toBinary(decimalToInt(nums[1]))
+	c := toBinary(decimalToInt(nums[2]))
 
-	a := parseInt(data, &pos)
-	b := parseInt(data, &pos)
-	c := parseInt(data, &pos)
+	// 2a
+	aa := shiftLeft(a)
 
-	left := 2*a + 2*b
-	right := 2 * c
+	// 2b
+	bb := shiftLeft(b)
+
+	// 2c
+	cc := shiftLeft(c)
+
+	left := binaryAdd(aa, bb)
 
 	var output []byte
 
-	if left > right {
+	if binaryCompare(left, cc) > 0 {
 		output = []byte("Good\r\n")
 	} else {
 		output = []byte("Bad\r\n")
 	}
 
-	C.console_write(
+	C.write_console(
 		console,
 		(*C.char)(unsafe.Pointer(&output[0])),
 		C.DWORD(len(output)),
