@@ -43,7 +43,6 @@ import (
 	"unsafe"
 )
 
-// 十进制字符串 → uint64
 func decimalToInt(s []byte) uint64 {
 	var n uint64
 
@@ -56,8 +55,6 @@ func decimalToInt(s []byte) uint64 {
 	return n
 }
 
-// 十进制整数 → 二进制
-// 返回最低位在前
 func toBinary(n uint64) []byte {
 	if n == 0 {
 		return []byte{0}
@@ -73,8 +70,6 @@ func toBinary(n uint64) []byte {
 	return bits
 }
 
-// 二进制数组左移一位
-// 相当于 ×2
 func shiftLeft(bits []byte) []byte {
 	result := make([]byte, len(bits)+1)
 
@@ -84,8 +79,6 @@ func shiftLeft(bits []byte) []byte {
 
 	return result
 }
-
-// 二进制加法
 func binaryAdd(a, b []byte) []byte {
 	n := len(a)
 
@@ -121,7 +114,6 @@ func binaryAdd(a, b []byte) []byte {
 	return result
 }
 
-// 去掉二进制最高位的 0
 func normalize(bits []byte) []byte {
 	for len(bits) > 1 && bits[len(bits)-1] == 0 {
 		bits = bits[:len(bits)-1]
@@ -130,13 +122,6 @@ func normalize(bits []byte) []byte {
 	return bits
 }
 
-// 二进制比较
-// 返回：
-//
-//	1  a > b
-//	0  a == b
-//
-// -1  a < b
 func binaryCompare(a, b []byte) int {
 	a = normalize(a)
 	b = normalize(b)
