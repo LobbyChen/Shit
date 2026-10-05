@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/rukaax/桌面/shit/cmake-build-debug",
+  "command": "/usr/bin/c++ -g -std=gnu++20 -fdiagnostics-color=always -o CMakeFiles/shit.dir/main.cpp.o -c /home/rukaax/桌面/shit/main.cpp",
+  "file": "/home/rukaax/桌面/shit/main.cpp",
+  "output": "/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/shit.dir/main.cpp.o"
+},
+{
+  "directory": "/home/rukaax/桌面/shit/cmake-build-debug",
+  "command": "/usr/bin/c++ -I/home/rukaax/桌面/shit/include -g -std=gnu++20 -fdiagnostics-color=always -o CMakeFiles/inequality.dir/inequality.cpp.o -c /home/rukaax/桌面/shit/inequality.cpp",
+  "file": "/home/rukaax/桌面/shit/inequality.cpp",
+  "output": "/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/inequality.dir/inequality.cpp.o"
+},
+{
+  "directory": "/home/rukaax/桌面/shit/cmake-build-debug",
+  "command": "/usr/bin/c++ -I/home/rukaax/桌面/shit/include -g -std=gnu++20 -fdiagnostics-color=always -o CMakeFiles/product.dir/product.cpp.o -c /home/rukaax/桌面/shit/product.cpp",
+  "file": "/home/rukaax/桌面/shit/product.cpp",
+  "output": "/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/product.dir/product.cpp.o"
+}
+]

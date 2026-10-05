@@ -1,0 +1,4 @@
+ToolSet: 1.0 (local)Ninja: 1.13.2@/home/rukaax/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja
+Options: 
+
+Options:-DCMAKE_MAKE_PROGRAM=/home/rukaax/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja

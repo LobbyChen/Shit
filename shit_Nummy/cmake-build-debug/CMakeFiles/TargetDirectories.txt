@@ -1,0 +1,5 @@
+/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/shit.dir
+/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/inequality.dir
+/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/product.dir
+/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/rukaax/桌面/shit/cmake-build-debug/CMakeFiles/rebuild_cache.dir
