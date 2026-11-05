@@ -260,6 +260,131 @@ if os.path.isdir(py目录):
     测C2("py", os.path.join(py目录, "ghost.py"), True)
     测C2失联("py", os.path.join(py目录, "ghost.py"), True)
 
+# ------------------------------- C# 版 ---------------------------------------
+csc路径 = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+cs目录 = os.path.join(这里, "csharp")
+
+if os.path.exists(csc路径) and os.path.isdir(cs目录):
+    def 编译cs(cs源, exe):
+        # csc 是 2019 年的,吃 UTF-8 要 /codepage:65001,跟 MSVC 的 /utf-8 一个脾气
+        try:
+            r = subprocess.run(
+                [csc路径, "/nologo", "/optimize+", "/codepage:65001",
+                 "/nowarn:0219,0168,0414", "/out:" + exe,
+                 cs源, os.path.join(cs目录, "rr.cs")],
+                cwd=cs目录, capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=300)
+        except subprocess.TimeoutExpired:
+            return False, "csc 编译超时 300 秒,编译器可能去灵界了"
+        if r.returncode != 0:
+            return False, (r.stderr or r.stdout or "")[-600:]
+        return True, ""
+
+    def 编译cs幽灵(目标端口, exe名):
+        # C2 无法连真实地址(假地址),临时副本指向冒牌服务器,测完即删
+        with open(cs源表["ghost"], encoding="utf-8") as f:
+            源码 = f.read()
+        临时cs = os.path.join(构建, "_临时_ghost.cs")
+        with open(临时cs, "w", encoding="utf-8") as f:
+            f.write(源码.replace('"114.51.4.191"', '"127.0.0.1"')
+                         .replace("const int 灵界端口 = 9810",
+                                  "const int 灵界端口 = %d" % 目标端口))
+        return 编译cs(临时cs, exe名)
+
+    cs源表 = {名: os.path.join(cs目录, 名 + ".cs")
+              for 名 in ("inequality", "product", "bill", "ghost")}
+    cs全过 = True
+    for 名, 源 in cs源表.items():
+        exe = os.path.join(构建, "cs_" + 名 + ".exe")
+        好了, 为什么 = 编译cs(源, exe)
+        if 好了:
+            print("== 编译 %s.cs (C#) 通过 ==" % 名)
+        else:
+            cs全过 = False
+            print("== 编译 %s.cs (C#) 失败 ==\n%s" % (名, 为什么))
+    if not cs全过:
+        print("C# 编译塌了,屎山塌成零件了。")
+        sys.exit(1)
+    测一组("A", "cs", 做runner(os.path.join(构建, "cs_inequality.exe")), A用例)
+    测一组("B", "cs", 做runner(os.path.join(构建, "cs_product.exe")), B用例)
+    测一组("C1", "cs", 做runner(os.path.join(构建, "cs_bill.exe")), C1用例)
+
+    应答队列[:] = list(应答清单)   # 上几轮可能把应答喝光了,重新斟满
+    cs幽灵exe = os.path.join(构建, "cs_临时_ghost.exe")
+    服务器 = socketserver.TCPServer(("127.0.0.1", 0), 冒牌鬼神)
+    threading.Thread(target=服务器.serve_forever, daemon=True).start()
+    try:
+        好了, 为什么 = 编译cs幽灵(服务器.server_address[1], cs幽灵exe)
+        if not 好了:
+            报结果("cs/C2", "编译失败", "260.5", 为什么)
+        else:
+            实际, 码, 错 = 做runner(cs幽灵exe)("")
+            报结果("cs/C2", 实际, "260.5",
+                   "" if 码 == 0 else "(stderr: %s)" % 错[-150:].replace("\n", " "))
+    finally:
+        服务器.shutdown()
+        服务器.server_close()
+
+    print("[信息] cs/C2失联：无人监听端口在本机要熬约 63 秒 SYN 超时,请勿惊慌")
+    好了, _ = 编译cs幽灵(9, cs幽灵exe)
+    if 好了:
+        实际, _, _ = 做runner(cs幽灵exe)("")
+        报结果("cs/C2失联", 实际, "0")
+    for 残骸 in ("_临时_ghost.cs", "cs_临时_ghost.exe"):
+        路径 = os.path.join(构建, 残骸)
+        if os.path.exists(路径):
+            os.remove(路径)
+
+# ------------------------------- PHP 版 ---------------------------------------
+php路径 = os.path.join(这里, "_toolchain", "php8", "php.exe")
+php目录 = os.path.join(这里, "php")
+
+if os.path.exists(php路径) and os.path.isdir(php目录):
+    # PHP 不用编译,本院对此评价:"连编译都懒得编译,很好,很有精神。"
+    def 做phprunner(php文件):
+        return lambda 输入: 跑命令([php路径, php文件], 输入)
+
+    php文件表 = {名: os.path.join(php目录, 名 + ".php")
+                 for 名 in ("inequality", "product", "bill", "ghost")}
+    缺货 = [p for p in php文件表.values() if not os.path.exists(p)]
+    if 缺货:
+        print("PHP 源码缺货: %s" % 缺货)
+        sys.exit(1)
+
+    def 做php幽灵(目标端口, 临时php):
+        # C2 无法连真实地址(假地址),临时副本指向冒牌服务器,测完即删
+        with open(php文件表["ghost"], encoding="utf-8") as f:
+            源码 = f.read()
+        with open(临时php, "w", encoding="utf-8") as f:
+            f.write(源码.replace("'114.51.4.191'", "'127.0.0.1'")
+                         .replace("灵界端口 = 9810", "灵界端口 = %d" % 目标端口))
+
+    测一组("A", "php", 做phprunner(php文件表["inequality"]), A用例)
+    测一组("B", "php", 做phprunner(php文件表["product"]), B用例)
+    测一组("C1", "php", 做phprunner(php文件表["bill"]), C1用例)
+
+    应答队列[:] = list(应答清单)   # 上几轮可能把应答喝光了,重新斟满
+    服务器 = socketserver.TCPServer(("127.0.0.1", 0), 冒牌鬼神)
+    threading.Thread(target=服务器.serve_forever, daemon=True).start()
+    try:
+        临时php = os.path.join(构建, "_临时_ghost.php")
+        做php幽灵(服务器.server_address[1], 临时php)
+        实际, 码, 错 = 做phprunner(临时php)("")
+        报结果("php/C2", 实际, "260.5",
+               "" if 码 == 0 else "(退出码 %d, stderr: %s)" % (码, 错[-150:].replace("\n", " ")))
+    finally:
+        服务器.shutdown()
+        服务器.server_close()
+
+    print("[信息] php/C2失联：无人监听端口在本机要熬约 63 秒 SYN 超时,请勿惊慌")
+    做php幽灵(9, 临时php)
+    实际, _, _ = 做phprunner(临时php)("")
+    报结果("php/C2失联", 实际, "0")
+    for 残骸 in ("_临时_ghost.php",):
+        路径 = os.path.join(构建, 残骸)
+        if os.path.exists(路径):
+            os.remove(路径)
+
 print()
 print("========== 自检完成：通过 %d，失败 %d ==========" % (通过数, 失败数))
 if 失败数:
