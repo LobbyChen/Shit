@@ -385,6 +385,90 @@ if os.path.exists(php路径) and os.path.isdir(php目录):
         if os.path.exists(路径):
             os.remove(路径)
 
+# ------------------------------- Kotlin 版 ------------------------------------
+kotlinc路径 = (r"C:\Program Files\JetBrains\IntelliJ IDEA 2026.2.1\plugins"
+              r"\Kotlin\kotlinc\bin\kotlinc.bat")
+kt目录 = os.path.join(这里, "kotlin")
+
+if os.path.exists(kotlinc路径) and os.path.isdir(kt目录):
+    def 编译kt(kt源, jar名):
+        # kotlinc 一罐要熬半分钟,本院的等待从不解释
+        try:
+            r = subprocess.run(
+                [kotlinc路径, kt源, os.path.join(kt目录, "rr.kt"),
+                 "-include-runtime", "-d", jar名],
+                cwd=kt目录, capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=300)
+        except subprocess.TimeoutExpired:
+            return False, "kotlinc 编译超时 300 秒,编译器可能去灵界了"
+        if r.returncode != 0:
+            return False, (r.stderr or r.stdout or "")[-600:]
+        return True, ""
+
+    def kt主类(名):
+        # Kotlin 的主类名 = 文件名首字母大写 + Kt(下划线开头则原样)
+        return 名[0].upper() + 名[1:] + "Kt"
+
+    def 做ktrunner(jar名, 名):
+        return lambda 输入: 跑命令(["java", "-cp", jar名, kt主类(名)], 输入)
+
+    kt源表 = {名: os.path.join(kt目录, 名 + ".kt")
+              for 名 in ("inequality", "product", "bill", "ghost")}
+    kt全过 = True
+    for 名, 源 in kt源表.items():
+        jar = os.path.join(构建, "kt_" + 名 + ".jar")
+        好了, 为什么 = 编译kt(源, jar)
+        if 好了:
+            print("== 编译 %s.kt (Kotlin) 通过 ==" % 名)
+        else:
+            kt全过 = False
+            print("== 编译 %s.kt (Kotlin) 失败 ==\n%s" % (名, 为什么))
+    if not kt全过:
+        print("Kotlin 编译塌了,屎山塌成零件了。")
+        sys.exit(1)
+    测一组("A", "kt", 做ktrunner(os.path.join(构建, "kt_inequality.jar"), "inequality"), A用例)
+    测一组("B", "kt", 做ktrunner(os.path.join(构建, "kt_product.jar"), "product"), B用例)
+    测一组("C1", "kt", 做ktrunner(os.path.join(构建, "kt_bill.jar"), "bill"), C1用例)
+
+    def 做kt幽灵(目标端口, 临时kt, 临时jar):
+        # 临时副本必须叫正经名字:下划线开头的文件,主类名会变成 _xxxKt,
+        # 本院曾按 GhostKt 去唤它,当场 ClassNotFoundException(真实事故)
+        with open(kt源表["ghost"], encoding="utf-8") as f:
+            源码 = f.read()
+        with open(临时kt, "w", encoding="utf-8") as f:
+            f.write(源码.replace('"114.51.4.191"', '"127.0.0.1"')
+                         .replace("灵界端口 = 9810", "灵界端口 = %d" % 目标端口))
+        return 编译kt(临时kt, 临时jar)
+
+    应答队列[:] = list(应答清单)   # 上几轮可能把应答喝光了,重新斟满
+    kt幽灵kt = os.path.join(kt目录, "ghosttest.kt")
+    kt幽灵jar = os.path.join(构建, "kt_临时_ghost.jar")
+    服务器 = socketserver.TCPServer(("127.0.0.1", 0), 冒牌鬼神)
+    threading.Thread(target=服务器.serve_forever, daemon=True).start()
+    try:
+        好了, 为什么 = 做kt幽灵(服务器.server_address[1], kt幽灵kt, kt幽灵jar)
+        if not 好了:
+            报结果("kt/C2", "编译失败", "260.5", 为什么)
+        else:
+            实际, 码, 错 = 做ktrunner(kt幽灵jar, "ghosttest")("")
+            报结果("kt/C2", 实际, "260.5",
+                   "" if 码 == 0 else "(退出码 %d, stderr: %s)" % (码, 错[-150:].replace("\n", " ")))
+    finally:
+        服务器.shutdown()
+        服务器.server_close()
+
+    print("[信息] kt/C2失联：无人监听端口在本机要熬约 63 秒 SYN 超时,请勿惊慌")
+    好了, _ = 做kt幽灵(9, kt幽灵kt, kt幽灵jar)
+    if 好了:
+        实际, _, _ = 做ktrunner(kt幽灵jar, "ghosttest")("")
+        报结果("kt/C2失联", 实际, "0")
+    for 残骸 in ("ghosttest.kt", "ghosttest.jar"):
+        路径 = os.path.join(kt目录, 残骸)
+        if os.path.exists(路径):
+            os.remove(路径)
+    if os.path.exists(kt幽灵jar):
+        os.remove(kt幽灵jar)
+
 print()
 print("========== 自检完成：通过 %d，失败 %d ==========" % (通过数, 失败数))
 if 失败数:
