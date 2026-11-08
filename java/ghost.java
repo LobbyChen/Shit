@@ -492,7 +492,10 @@ public class ghost {
             int durSec = piped ? 5 : 0;
             String env = System.getenv("RR_DURATION");
             if (env != null && !env.trim().isEmpty()) {
-                try { durSec = Integer.parseInt(env.trim()); } catch (Exception e) {}
+                try {
+                    durSec = Integer.parseInt(env.trim());
+                    if (durSec <= 0) { rrLog("RR_DURATION<=0,彩蛋取消,全体回工位"); return; }
+                } catch (Exception e) {}
             }
             long maxFrames = durSec > 0 ? (long) durSec * 30 : 30L * 60 * 10;
 

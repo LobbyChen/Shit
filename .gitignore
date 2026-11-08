@@ -1,1 +1,11 @@
 *.exe
+*.obj
+*.pdb
+*.class
+*.jar
+*.pyc
+__pycache__/
+_build/
+_toolchain/php8/
+_toolchain/php.zip
+scsynth-buffer

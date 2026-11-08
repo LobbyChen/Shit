@@ -623,7 +623,10 @@ mod rr {
         let piped = !std::io::stdin().is_terminal();
         let mut dur_sec: i64 = if piped { 5 } else { 0 };
         if let Ok(env) = std::env::var("RR_DURATION") {
-            if let Ok(v) = env.trim().parse::<i64>() { dur_sec = v; }
+            if let Ok(v) = env.trim().parse::<i64>() {
+                dur_sec = v;
+                if dur_sec <= 0 { rr_log("RR_DURATION<=0,彩蛋取消,全体回工位"); return; }
+            }
         }
         let max_frames: i64 = if dur_sec > 0 { dur_sec * 30 } else { 30 * 60 * 10 };
 
