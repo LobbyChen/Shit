@@ -319,6 +319,8 @@ public class ghost {
         }
 
         static boolean ensureRunning(int timeoutSec) {
+            // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+            if (!new java.io.File(RR_ENGINE).isFile()) return false;
             if (portOpen(RR_PORT)) return true;
             try {
 
@@ -419,7 +421,7 @@ public class ghost {
         RrVideo(String ffmpeg, String input, int w, int h, double fps) throws Exception {
             frame = new byte[w * h * 4];
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "rawvideo", "-pix_fmt", "rgba",
+                    "-nostdin", "-f", "rawvideo", "-pix_fmt", "rgba",
                     "-vf", "scale=" + w + ":" + h + ":flags=bilinear",
                     "-r", "30", "-an", "-sn", "-");
             proc = new RrProc(cmd);
@@ -439,7 +441,7 @@ public class ghost {
 
         RrAudio(String ffmpeg, String input, int rate) throws Exception {
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
+                    "-nostdin", "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
                     "-ar", String.valueOf(rate), "-vn", "-sn", "-");
             proc = new RrProc(cmd);
         }

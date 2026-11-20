@@ -92,12 +92,12 @@ static class Rr {
         Thread 喂食线程 = null;
         try {
             视频进程 = 起ffmpeg(ffmpeg, "-v error -i \"" + 视频路径 + "\""
-                + " -f rawvideo -pix_fmt rgba"
+                + " -nostdin -f rawvideo -pix_fmt rgba"
                 + " -vf \"scale=" + pixW + ":" + pixH + ":flags=bilinear\""
                 + " -r 30 -an -sn -");
             if (引擎 != null) {
                 音频进程 = 起ffmpeg(ffmpeg, "-v error -i \"" + 视频路径 + "\""
-                    + " -f f32le -acodec pcm_f32le -ac 2 -ar " + 采样率 + " -vn -sn -");
+                    + " -nostdin -f f32le -acodec pcm_f32le -ac 2 -ar " + 采样率 + " -vn -sn -");
                 Process 音频 = 音频进程;
                 AudioEngine eng = 引擎;
                 喂食线程 = new Thread(delegate() { 喂食(音频, eng, 采样率); });
@@ -219,6 +219,8 @@ static class 引擎维护处 {
     const string 引擎路径 = @"C:\Program Files\Sonic Pi\app\server\native\Sonic Pi - SuperSonic.exe";
 
     public static bool 确保运行中() {
+        // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+        if (!File.Exists(引擎路径)) return false;
         if (端口开着(端口)) return true;
         try {
             if (File.Exists(引擎路径)) {

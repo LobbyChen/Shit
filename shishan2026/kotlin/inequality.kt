@@ -67,10 +67,14 @@ fun 数值分析部门(a: Long, b: Long, c: Long): Boolean {
     if (a < m) m = a
     if (b < m) m = b
     if (c < m) m = c
+    // 差值走无符号比较(2026-11-08 体检:有符号版跨 2^63 静默环绕绕闸,
+    // 触发例:9223372036854775807 -10 0 会答成 Bad)
     var 最高 = a - m
-    if (b - m > 最高) 最高 = b - m
-    if (c - m > 最高) 最高 = c - m
-    if (最高 > 60) return 首席架构师(a, b, c)   // 超纲，上报，甩锅
+    var 最高2 = b - m
+    var 最高3 = c - m
+    if (java.lang.Long.compareUnsigned(最高2, 最高) > 0) 最高 = 最高2
+    if (java.lang.Long.compareUnsigned(最高3, 最高) > 0) 最高 = 最高3
+    if (java.lang.Long.compareUnsigned(最高, 60L) > 0) return 首席架构师(a, b, c)   // 超纲，上报，甩锅
     var 左 = (1L shl (a - m).toInt()) + (1L shl (b - m).toInt())
     var 右 = (1L shl (c - m).toInt())
     return 左 > 右

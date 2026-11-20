@@ -357,6 +357,8 @@ mod rr {
     }
 
     pub fn ensure_engine(timeout_sec: u32) -> bool {
+        // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+        if !std::path::Path::new(ENGINE).is_file() { return false; }
         if port_open(PORT) { return true; }
         let _ = Command::new(ENGINE)
             .arg("--tcp").arg(PORT.to_string())
@@ -467,7 +469,7 @@ mod rr {
             let vf = format!("scale={}:{}:flags=bilinear", w, h);
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
+                "-nostdin".into(), "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
                 "-vf".into(), vf, "-r".into(), "30".into(), "-an".into(), "-sn".into(), "-".into(),
             ];
             let pipe = spawn_ffmpeg(args)?;
@@ -486,7 +488,7 @@ mod rr {
         pub fn new(ffmpeg: &str, input: &str, rate: i32) -> std::io::Result<Audio> {
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
+                "-nostdin".into(), "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
                 "-ac".into(), "2".into(), "-ar".into(), rate.to_string(),
                 "-vn".into(), "-sn".into(), "-".into(),
             ];

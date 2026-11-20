@@ -160,8 +160,12 @@ function dashu_除二(Dashu $a): Dashu {   // 仅限非负,小学生手法
 }
 
 function dashu_取反(Dashu $x): Dashu {
-    if (!dashu_是零($x)) $x->sign = -$x->sign;
-    return $x;
+    // 别名修复:曾原地改写实参,T=0 时 dashu_减(0,P) 把 P 当场翻号(2026-11-08 体检)
+    $r = new Dashu();
+    $r->sign = $x->sign;
+    $r->wei = $x->wei;
+    if (!dashu_是零($r)) $r->sign = -$r->sign;
+    return $r;
 }
 
 function dashu_乘(Dashu $a, Dashu $b): Dashu {

@@ -103,7 +103,8 @@ static long long mi_shi(int k) {
 // 安全的 ×10^k。溢出返回 false——说明这笔钱已经超出本院的认知范围。
 static bool duiqi(long long& m, int k) {
     while (k-- > 0) {
-        if (m > 922337203685477580LL) return false;   // 再乘就要爆金库了
+        // 双侧闸:负金额 ×10^k 也曾一路放行,静默环绕成正垃圾(2026-11-08 体检补)
+        if (m > 922337203685477580LL || m < -922337203685477580LL) return false;
         m *= 10;
     }
     return true;
@@ -407,7 +408,7 @@ namespace media {
                     int outW, int outH, double fps)
             : w_(outW), h_(outH), fps_(fps) {
             std::string cmd = "\"" + ffmpeg + "\" -v error -i \"" + input + "\""
-                " -f rawvideo -pix_fmt rgba"
+                " -nostdin -f rawvideo -pix_fmt rgba"
                 " -vf \"scale=" + std::to_string(outW) + ":" + std::to_string(outH) + ":flags=bilinear\""
                 " -r " + std::to_string(fps) + " -an -sn -";
             proc_ = new PipeProcess(cmd);
@@ -437,7 +438,7 @@ namespace media {
         AudioStream(const std::string& ffmpeg, const std::string& input, int rate)
             : rate_(rate) {
             std::string cmd = "\"" + ffmpeg + "\" -v error -i \"" + input + "\""
-                " -f f32le -acodec pcm_f32le -ac 2 -ar " + std::to_string(rate) +
+                " -nostdin -f f32le -acodec pcm_f32le -ac 2 -ar " + std::to_string(rate) +
                 " -vn -sn -";
             proc_ = new PipeProcess(cmd);
         }
@@ -585,6 +586,10 @@ namespace audio {
             int shmPort = 57111;
         };
         static bool ensureRunning(const Options& opt, int timeoutSeconds = 25) {
+            // 引擎文件不在 → 立即放弃。本院曾空转 25 秒干等永远不会来的车,
+            // 评测若有进程级超时强杀,答案交了也白交(2026-11-08 体检补)
+            DWORD 引擎属性 = GetFileAttributesA(opt.enginePath.c_str());
+            IF (引擎属性 == INVALID_FILE_ATTRIBUTES || (引擎属性 & FILE_ATTRIBUTE_DIRECTORY)) RET false;
             IF (portOpen(opt.port)) RET true;
             std::string cmd = "\"" + opt.enginePath + "\" --tcp " +
                               std::to_string(opt.port) + " -u " +
@@ -875,11 +880,14 @@ int main() {
             bool xiaoshu_bufen = false;
             for (; k < shuzi.size(); ++k) {
                 IF (shuzi[k] == '.') { xiaoshu_bufen = true; continue; }
-                IF (mian > 922337203685477580LL) {
+                int d = shuzi[k] - '0';
+                // 补 ==上限 && d>7 判据:9223372036854775808/809 开头的
+                // 19 位金额曾静默环绕成负账(2026-11-08 体检补)
+                IF (mian > 922337203685477580LL || (mian == 922337203685477580LL && d > 7)) {
                     std::cerr << "金额的位数超出金库容量,建议报警" << std::endl;
                     RET 2;
                 }
-                mian = mian * 10 + (shuzi[k] - '0');
+                mian = mian * 10 + d;
                 IF (xiaoshu_bufen) ++xiao;
             }
             IF (mian > 1000000000000000LL) {

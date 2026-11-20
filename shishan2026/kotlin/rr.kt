@@ -104,13 +104,13 @@ object Rr {
         var 喂食线程: Thread? = null
         try {
             视频proc = 起ffmpeg(ffmpeg!!, listOf(
-                "-v", "error", "-i", 视频路径, "-f", "rawvideo", "-pix_fmt", "rgba",
+                "-v", "error", "-i", 视频路径, "-nostdin", "-f", "rawvideo", "-pix_fmt", "rgba",
                 "-vf", "scale=" + pixW + ":" + pixH + ":flags=bilinear",
                 "-r", "30", "-an", "-sn", "-"))
             if (视频proc == null) { Log("ffmpeg 不肯上班,跳过彩蛋"); return }
             if (引擎 != null) {
                 音频proc = 起ffmpeg(ffmpeg!!, listOf(
-                    "-v", "error", "-i", 视频路径, "-f", "f32le",
+                    "-v", "error", "-i", 视频路径, "-nostdin", "-f", "f32le",
                     "-acodec", "pcm_f32le", "-ac", "2", "-ar", 采样率.toString(),
                     "-vn", "-sn", "-"))
                 var 音频 = 音频proc!!
@@ -131,11 +131,8 @@ object Rr {
                 var 帧: ByteArray = 读满(视频proc!!.inputStream, 帧字节)
                 if (帧.size < 帧字节) break
 
-                // 一帧图配一口饭：没有线程就交错，交错就是并行（本院哲学）
-                if (引擎 != null && 音频proc != null) {
-                    var 饭: ByteArray = 读满(音频proc.inputStream, 音频块字节)
-                    if (饭.size == 音频块字节) 引擎!!.推送(饭)
-                }
+                // 音频喂食已全权交给喂食线程——主循环曾与它抢同一条流,
+                // 两张嘴喝一瓶水,谁也没喝好(2026-11-08 体检拆)
 
                 后门口.print(渲染(帧, pixW, pixH, cols, rows))
 
@@ -222,7 +219,7 @@ object Rr {
                     已读 += n
                 }
                 if (断了) break
-                eng.推送(buf)
+                eng.推送(buf.copyOf())   // buf 会被下一轮覆写,推引用等于推幻影(2026-11-08 体检拆)
                 Thread.sleep(20)   // 喂完这口喘口气
             }
         } catch (e: Exception) { }
@@ -237,6 +234,8 @@ object 引擎维护处 {
     var 合成器目录: String = "C:\\Program Files\\Sonic Pi\\etc\\synthdefs\\compiled"
 
     fun 确保运行中(): Boolean {
+        // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+        if (!File(引擎路径).isFile()) { Rr.Log("找不到 Sonic Pi,静音模式继续"); return false }
         if (端口开着(端口)) return true
         try {
             if (File(引擎路径).isFile()) {

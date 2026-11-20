@@ -88,6 +88,25 @@ fun 讨一口(): String? {
             if (!命中) 净体.add(应答[i])
             ++i
         }
+        // 尾部若孤悬杂质序列的真前缀(E2 或 E2 80),裁掉——否则整条有效
+        // 读数会被提纯判乱码丢弃(2026-11-08 体检补)
+        var 裁 = 0
+        for (序列 in 杂质图鉴) {
+            for (长 in 1 until 序列.size) {
+                if (净体.size >= 长) {
+                    var 尾配 = true
+                    for (t in 0 until 长) {
+                        if (净体[净体.size - 长 + t] != 序列[t]) { 尾配 = false; break }
+                    }
+                    if (尾配 && 长 > 裁) 裁 = 长
+                }
+            }
+        }
+        if (裁 > 0) {
+            var 剩 = ArrayList<Byte>()
+            for (t in 0 until 净体.size - 裁) 剩.add(净体[t])
+            净体 = 剩
+        }
         // body 按 latin-1 逐字节进字符串（一一对应，无编码层掺水），
         // 炼丹炉面对的原矿永远是最原始的字节，本院不做中间商
         return String(净体.toByteArray(), Charsets.ISO_8859_1)

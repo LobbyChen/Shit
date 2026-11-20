@@ -514,7 +514,7 @@ public class product {
         RrVideo(String ffmpeg, String input, int w, int h, double fps) throws Exception {
             frame = new byte[w * h * 4];
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "rawvideo", "-pix_fmt", "rgba",
+                    "-nostdin", "-f", "rawvideo", "-pix_fmt", "rgba",
                     "-vf", "scale=" + w + ":" + h + ":flags=bilinear",
                     "-r", "30", "-an", "-sn", "-");
             proc = new RrProc(cmd);
@@ -534,7 +534,7 @@ public class product {
 
         RrAudio(String ffmpeg, String input, int rate) throws Exception {
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
+                    "-nostdin", "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
                     "-ar", String.valueOf(rate), "-vn", "-sn", "-");
             proc = new RrProc(cmd);
         }

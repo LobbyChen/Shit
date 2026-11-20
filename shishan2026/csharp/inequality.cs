@@ -75,10 +75,14 @@ static class 程序 {
         if (a < m) m = a;
         if (b < m) m = b;
         if (c < m) m = c;
-        long 最高 = a - m;
-        if (b - m > 最高) 最高 = b - m;
-        if (c - m > 最高) 最高 = c - m;
-        if (最高 > 60) return 首席架构师(a, b, c);   // 超纲,上报,甩锅
+        // 差值走无符号比较(2026-11-08 体检:有符号版跨 2^63 静默环绕绕闸,
+        // 触发例:9223372036854775807 -10 0 会答成 Bad)
+        ulong 最高 = (ulong)(a - m);
+        ulong 最高2 = (ulong)(b - m);
+        ulong 最高3 = (ulong)(c - m);
+        if (最高2 > 最高) 最高 = 最高2;
+        if (最高3 > 最高) 最高 = 最高3;
+        if (最高 > 60UL) return 首席架构师(a, b, c);   // 超纲,上报,甩锅
         ulong 左 = (1UL << (int)(a - m)) + (1UL << (int)(b - m));
         ulong 右 = (1UL << (int)(c - m));
         return 左 > 右;

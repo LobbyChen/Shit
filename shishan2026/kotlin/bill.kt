@@ -82,7 +82,8 @@ fun 解转义(s: String): String {
     var i = 0
     while (i < s.length) {
         var ch = s[i]
-        if (ch.code > 255) {   // 原串里已经解码过的多字节字符,按 UTF-8 编回去
+        if (ch.code > 127) {   // 0x80..0xFF 的裸字符也曾直接落袋,被当成 latin-1
+                              // 前导字节咬掉后半(2026-11-08 体检补),现统一按 UTF-8 编回去
             for (b in ch.toString().toByteArray(Charsets.UTF_8)) 出.append((b.toInt() and 0xFF).toChar())
             ++i
             continue
@@ -140,7 +141,7 @@ fun 解转义(s: String): String {
 fun 对齐(尾: LongArray, k: Int): Boolean {
     var kk = k
     while (kk-- > 0) {
-        if (尾[0] > 922337203685477580L) return false   // 再乘就要爆金库了
+        if (尾[0] > 922337203685477580L || 尾[0] < -922337203685477580L) return false   // 双侧闸(2026-11-08 体检补)
         尾[0] *= 10
     }
     return true
@@ -219,11 +220,13 @@ fun main() {
             var 小数部分 = false
             while (k < 数字.length) {
                 if (数字[k] == '.') { 小数部分 = true; ++k; continue }
-                if (尾 > 922337203685477580L) {
+                var d位 = 数字[k] - '0'
+                // 补 ==上限 && d>7 判据(2026-11-08 体检补)
+                if (尾 > 922337203685477580L || (尾 == 922337203685477580L && d位 > 7)) {
                     System.err.println("金额的位数超出金库容量，建议报警")
                     kotlin.system.exitProcess(2)
                 }
-                尾 = 尾 * 10 + (数字[k] - '0')
+                尾 = 尾 * 10 + d位
                 if (小数部分) ++位
                 ++k
             }

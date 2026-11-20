@@ -172,8 +172,12 @@ fun 除二(a: Dashu): Dashu {   // 仅限非负，小学生手法
 }
 
 fun 取反(x: Dashu): Dashu {
-    if (!是零(x)) x.sign = -x.sign
-    return x
+    // 别名修复:曾原地改写实参,T=0 时 减(0,P) 把 P 当场翻号,数学塌方(2026-11-08 体检)
+    var r = Dashu()
+    r.sign = x.sign
+    r.wei = ArrayList(x.wei)
+    if (!是零(r)) r.sign = -r.sign
+    return r
 }
 
 fun 乘(a: Dashu, b: Dashu): Dashu {

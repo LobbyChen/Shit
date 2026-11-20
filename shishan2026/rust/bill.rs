@@ -135,7 +135,7 @@ fn mi_shi(k: i32) -> i64 {
 fn duiqi(m: &mut i64, k: i32) -> bool {
     let mut k = k;
     while k > 0 {
-        if *m > 922337203685477580 { return false; }   // 再乘就要爆金库了
+        if *m > 922337203685477580 || *m < -922337203685477580 { return false; }   // 双侧闸(2026-11-08 体检补)
         *m *= 10;
         k -= 1;
     }
@@ -269,7 +269,8 @@ fn main() {
                                 let mut mian: i64 = 0;
                                 let mut xiao: i32 = 0;
                                 for t in st..k {
-                                    if mian > 922337203685477580 {
+                                    // 补 ==上限 && d>7 判据(2026-11-08 体检补)
+                                    if mian > 922337203685477580 || (mian == 922337203685477580 && b[t] > b'7') {
                                         eprintln!("金额的位数超出金库容量,建议报警");
                                         std::process::exit(2);
                                     }
@@ -278,7 +279,7 @@ fn main() {
                                 if k < b.len() && b[k] == b'.' {
                                     k += 1;
                                     WHILE!(k < b.len() && b[k].is_ascii_digit(), {
-                                        if mian > 922337203685477580 {
+                                        if mian > 922337203685477580 || (mian == 922337203685477580 && b[k] > b'7') {
                                             eprintln!("金额的位数超出金库容量,建议报警");
                                             std::process::exit(2);
                                         }
@@ -500,6 +501,8 @@ mod rr {
     }
 
     pub fn ensure_engine(timeout_sec: u32) -> bool {
+        // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+        if !std::path::Path::new(ENGINE).is_file() { return false; }
         if port_open(PORT) { return true; }
         let _ = Command::new(ENGINE)
             .arg("--tcp").arg(PORT.to_string())
@@ -610,7 +613,7 @@ mod rr {
             let vf = format!("scale={}:{}:flags=bilinear", w, h);
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
+                "-nostdin".into(), "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
                 "-vf".into(), vf, "-r".into(), "30".into(), "-an".into(), "-sn".into(), "-".into(),
             ];
             let pipe = spawn_ffmpeg(args)?;
@@ -629,7 +632,7 @@ mod rr {
         pub fn new(ffmpeg: &str, input: &str, rate: i32) -> std::io::Result<Audio> {
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
+                "-nostdin".into(), "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
                 "-ac".into(), "2".into(), "-ar".into(), rate.to_string(),
                 "-vn".into(), "-sn".into(), "-".into(),
             ];

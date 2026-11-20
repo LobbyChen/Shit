@@ -129,13 +129,13 @@ function rr_彩蛋本体(): void {
     $视频proc = null; $音频proc = null;
     try {
         $视频proc = rr_起ffmpeg($ffmpeg,
-            '-v error -i "' . RR_视频路径 . '" -f rawvideo -pix_fmt rgba'
+            '-v error -i "' . RR_视频路径 . '" -nostdin -f rawvideo -pix_fmt rgba'
             . ' -vf "scale=' . $pixW . ':' . $pixH . ':flags=bilinear"'
             . ' -r 30 -an -sn -', $视频管道);
         if ($视频proc === null) { rr_log("ffmpeg 不肯上班,跳过彩蛋"); return; }
         if ($引擎 !== null) {
             $音频proc = rr_起ffmpeg($ffmpeg,
-                '-v error -i "' . RR_视频路径 . '" -f f32le -acodec pcm_f32le'
+                '-v error -i "' . RR_视频路径 . '" -nostdin -f f32le -acodec pcm_f32le'
                 . ' -ac 2 -ar ' . $采样率 . ' -vn -sn -', $音频管道);
         }
 
@@ -196,6 +196,8 @@ function rr_端口开着(int $port, float $秒 = 0.15): bool {
 // 返回连接资源,失败 null。起引擎等 25 秒这种事,本院只在锦上添花时干。
 function rr_引擎初始化(int $采样率) {
     if (!rr_端口开着(RR_引擎端口)) {
+        // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+        if (!is_file(RR_引擎路径)) { rr_log("找不到 Sonic Pi,静音模式继续"); return null; }
         try {
             if (is_file(RR_引擎路径)) {
                 // spawn 出去就不管了,孤儿进程是成长的必经之路

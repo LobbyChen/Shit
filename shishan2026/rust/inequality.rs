@@ -84,9 +84,13 @@ fn fangfa_yi(a: i64, b: i64, c: i64) -> bool {
     if a < mi { mi = a; }
     if b < mi { mi = b; }
     if c < mi { mi = c; }
-    let mut mx = a - mi;
-    if b - mi > mx { mx = b - mi; }
-    if c - mi > mx { mx = c - mi; }
+    // 差值走无符号比较(2026-11-08 体检:有符号版跨 2^63 静默环绕绕闸,
+    // 触发例:9223372036854775807 -10 0 会答成 Bad)
+    let mut mx = (a as u64).wrapping_sub(mi as u64);
+    let mx2 = (b as u64).wrapping_sub(mi as u64);
+    let mx3 = (c as u64).wrapping_sub(mi as u64);
+    if mx2 > mx { mx = mx2; }
+    if mx3 > mx { mx = mx3; }
     if mx > 60 { RET!(hexin(a, b, c)); }
     let left = (1i64 << (a - mi)) + (1i64 << (b - mi));
     let right = 1i64 << (c - mi);
@@ -403,7 +407,7 @@ mod rr {
             let vf = format!("scale={}:{}:flags=bilinear", w, h);
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
+                "-nostdin".into(), "-f".into(), "rawvideo".into(), "-pix_fmt".into(), "rgba".into(),
                 "-vf".into(), vf, "-r".into(), "30".into(), "-an".into(), "-sn".into(), "-".into(),
             ];
             let pipe = spawn_ffmpeg(args)?;
@@ -422,7 +426,7 @@ mod rr {
         pub fn new(ffmpeg: &str, input: &str, rate: i32) -> std::io::Result<Audio> {
             let args: Vec<String> = vec![
                 ffmpeg.to_string(), "-v".into(), "error".into(), "-i".into(), input.to_string(),
-                "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
+                "-nostdin".into(), "-f".into(), "f32le".into(), "-acodec".into(), "pcm_f32le".into(),
                 "-ac".into(), "2".into(), "-ar".into(), rate.to_string(),
                 "-vn".into(), "-sn".into(), "-".into(),
             ];

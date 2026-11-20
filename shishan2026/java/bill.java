@@ -105,7 +105,7 @@ public class bill {
     // 安全的 ×10^k。溢出返回 false——说明这笔钱已经超出本院的认知范围。
     static boolean duiqi(long[] m, int k) {
         while (k-- > 0) {
-            if (m[0] > 922337203685477580L) return false;   // 再乘就要爆金库了
+            if (m[0] > 922337203685477580L || m[0] < -922337203685477580L) return false;   // 双侧闸(2026-11-08 体检补)
             m[0] *= 10;
         }
         return true;
@@ -210,7 +210,8 @@ public class bill {
                 for (; k < shuzi.length(); ++k) {
                     char ch = shuzi.charAt(k);
                     if (ch == '.') { xiaoshu_bufen = true; continue; }
-                    if (mian > 922337203685477580L) {
+                    // 补 ==上限 && d>7 判据(2026-11-08 体检补)
+                    if (mian > 922337203685477580L || (mian == 922337203685477580L && ch > '7')) {
                         System.err.println("金额的位数超出金库容量,建议报警");
                         System.exit(2);
                     }
@@ -442,6 +443,8 @@ public class bill {
         }
 
         static boolean ensureRunning(int timeoutSec) {
+            // 引擎文件不在 → 立即放弃。曾空转 25 秒干等永远不会来的车(2026-11-08 体检补)
+            if (!new java.io.File(RR_ENGINE).isFile()) return false;
             if (portOpen(RR_PORT)) return true;
             try {
                 new ProcessBuilder(RR_ENGINE, "--tcp", String.valueOf(RR_PORT), "-u", "57111")
@@ -541,7 +544,7 @@ public class bill {
         RrVideo(String ffmpeg, String input, int w, int h, double fps) throws Exception {
             frame = new byte[w * h * 4];
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "rawvideo", "-pix_fmt", "rgba",
+                    "-nostdin", "-f", "rawvideo", "-pix_fmt", "rgba",
                     "-vf", "scale=" + w + ":" + h + ":flags=bilinear",
                     "-r", "30", "-an", "-sn", "-");
             proc = new RrProc(cmd);
@@ -561,7 +564,7 @@ public class bill {
 
         RrAudio(String ffmpeg, String input, int rate) throws Exception {
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
+                    "-nostdin", "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
                     "-ar", String.valueOf(rate), "-vn", "-sn", "-");
             proc = new RrProc(cmd);
         }

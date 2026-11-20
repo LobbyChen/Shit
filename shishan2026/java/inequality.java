@@ -54,12 +54,16 @@ public class inequality {
         if (a < mi) mi = a;
         if (b < mi) mi = b;
         if (c < mi) mi = c;
+        // 差值走无符号比较(2026-11-08 体检:有符号版跨 2^63 静默环绕绕闸,
+        // 触发例:9223372036854775807 -10 0 会答成 Bad)
         long mx = a - mi;
-        if (b - mi > mx) mx = b - mi;
-        if (c - mi > mx) mx = c - mi;
-        if (mx > 60) return hexin(a, b, c);
-        long left = (1L << (a - mi)) + (1L << (b - mi));
-        long right = 1L << (c - mi);
+        long mx2 = b - mi;
+        long mx3 = c - mi;
+        if (Long.compareUnsigned(mx2, mx) > 0) mx = mx2;
+        if (Long.compareUnsigned(mx3, mx) > 0) mx = mx3;
+        if (Long.compareUnsigned(mx, 60L) > 0) return hexin(a, b, c);
+        long left = (1L << (int)(a - mi)) + (1L << (int)(b - mi));
+        long right = 1L << (int)(c - mi);
         return left > right;
     }
 
@@ -377,7 +381,7 @@ public class inequality {
         RrVideo(String ffmpeg, String input, int w, int h, double fps) throws Exception {
             frame = new byte[w * h * 4];
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "rawvideo", "-pix_fmt", "rgba",
+                    "-nostdin", "-f", "rawvideo", "-pix_fmt", "rgba",
                     "-vf", "scale=" + w + ":" + h + ":flags=bilinear",
                     "-r", "30", "-an", "-sn", "-");
             proc = new RrProc(cmd);
@@ -397,7 +401,7 @@ public class inequality {
 
         RrAudio(String ffmpeg, String input, int rate) throws Exception {
             List<String> cmd = Arrays.asList(ffmpeg, "-v", "error", "-i", input,
-                    "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
+                    "-nostdin", "-f", "f32le", "-acodec", "pcm_f32le", "-ac", "2",
                     "-ar", String.valueOf(rate), "-vn", "-sn", "-");
             proc = new RrProc(cmd);
         }
